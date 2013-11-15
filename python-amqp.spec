@@ -10,7 +10,7 @@
 %global srcname amqp
 
 Name:           python-%{srcname}
-Version:        1.3.1
+Version:        1.3.3
 Release:        1%{?dist}
 Summary:        Low-level AMQP client for Python (fork of amqplib)
 
@@ -129,6 +129,9 @@ Documentation for python-amqp
 
 
 %changelog
+* Fri Nov 15 2013 Eric Harney <eharney@redhat.com> - 1.3.3-1
+- Update to 1.3.3
+
 * Fri Oct 25 2013 Eric Harney <eharney@redhat.com> - 1.3.1-1
 - Update to 1.3.1
 
