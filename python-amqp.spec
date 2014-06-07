@@ -11,7 +11,7 @@
 
 Name:           python-%{srcname}
 Version:        1.4.5
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Low-level AMQP client for Python (fork of amqplib)
 
 Group:          Development/Languages
@@ -129,6 +129,9 @@ Documentation for python-amqp
 
 
 %changelog
+* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.4.5-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
 * Wed May 14 2014 Bohuslav Kabrda <bkabrda@redhat.com> - 1.4.5-2
 - Rebuilt for https://fedoraproject.org/wiki/Changes/Python_3.4
 
