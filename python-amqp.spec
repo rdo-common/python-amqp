@@ -1,31 +1,27 @@
 %if 0%{?fedora} > 12
 %global with_python3 1
-%global sphinx_docs 1
 %else
-%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print (get_python_lib())")}
-%global sphinx_docs 0
 # These Sphinx docs do not build with python-sphinx 0.6 (el6)
 %endif
+%global sphinx_docs 0
 
 %global srcname amqp
 
 Name:           python-%{srcname}
-Version:        1.4.9
-Release:        4%{?dist}
+Version:        2.1.4
+Release:        1%{?dist}
 Summary:        Low-level AMQP client for Python (fork of amqplib)
 
 Group:          Development/Languages
 License:        LGPLv2+
 URL:            http://pypi.python.org/pypi/amqp
-Source0:        http://pypi.python.org/packages/source/a/%{srcname}/%{srcname}-%{version}.tar.gz
+Source0:        https://files.pythonhosted.org/packages/source/a/%{srcname}/%{srcname}-%{version}.tar.gz
 BuildArch:      noarch
 
-BuildRequires:  python2-devel
-BuildRequires:  python-setuptools
-BuildRequires:  python-nose
 %if 0%{?sphinx_docs}
 BuildRequires:  python-sphinx >= 0.8
 %endif
+
 
 
 %description
@@ -34,6 +30,23 @@ Low-level AMQP client for Python
 This is a fork of amqplib, maintained by the Celery project.
 
 This library should be API compatible with librabbitmq.
+
+
+%package -n python2-%{srcname}
+Summary:     Client library for AMQP
+Requires:    python2-vine
+BuildRequires:  python2-devel
+BuildRequires:  python2-setuptools
+BuildRequires:  python2-nose
+%{?python_provide:%python_provide python2-%{srcname}}
+
+%description -n python2-%{srcname}
+Low-level AMQP client for Python
+
+This is a fork of amqplib, maintained by the Celery project.
+
+This library should be API compatible with librabbitmq.
+
 
 %if 0%{?with_python3}
 %package -n python3-%{srcname}
@@ -44,6 +57,8 @@ BuildRequires:  python3-nose
 %if 0%{?sphinx_docs}
 BuildRequires:  python3-sphinx >= 0.8
 %endif
+%{?python_provide:%python_provide python3-%{srcname}}
+Requires:    python3-vine
 
 %description -n python3-%{srcname}
 Low-level AMQP client for Python
@@ -54,37 +69,37 @@ This library should be API compatible with librabbitmq.
 
 %endif
 
+%package doc
+Summary:        Documentation for python-amqp
+Group:          Documentation
+
+Requires:       %{name} = %{version}-%{release}
+
+%description doc
+Documentation for python-amqp
+
 
 %prep
-%setup -q -n %{srcname}-%{version}
-%if 0%{?with_python3}
-cp -a . %{py3dir}
-%endif
+%autosetup -n %{srcname}-%{version}
 
 
 %build
-%{__python} setup.py build
+%py2_build
 %if 0%{?with_python3}
-pushd %{py3dir}
-%{__python3} setup.py build
-popd
+%py3_build
 %endif
 
 
 
 %install
-%{__python} setup.py install --skip-build --root %{buildroot}
+%py2_install
 %if 0%{?with_python3}
-pushd %{py3dir}
-%{__python3} setup.py install --skip-build --root %{buildroot}
-popd
+%py3_install
 %endif
 
 # docs generation requires everything to be installed first
 export PYTHONPATH="$( pwd ):$PYTHONPATH"
 
-# Remove execute bit from example scripts (packaged as doc)
-chmod -x demo/*.py
 
 %if 0%{?sphinx_docs}
 pushd docs
@@ -99,36 +114,32 @@ rm -rf build/html/.doctrees build/html/.buildinfo
 popd
 %endif
 
-%files
-%doc Changelog LICENSE README.rst
-%{python_sitelib}/%{srcname}/
-%{python_sitelib}/%{srcname}*.egg-info
+%files -n python2-%{srcname}
+%doc Changelog README.rst
+%license LICENSE
+%{python2_sitelib}/%{srcname}
+%{python2_sitelib}/%{srcname}-%{version}-py%{python2_version}.egg-info
 
 %if 0%{?with_python3}
 %files -n python3-%{srcname}
-%doc Changelog LICENSE README.rst
-%{python3_sitelib}/%{srcname}/
-%{python3_sitelib}/%{srcname}*.egg-info
+%doc Changelog README.rst
+%license LICENSE
+%{python3_sitelib}/%{srcname}
+%{python3_sitelib}/%{srcname}-%{version}-py%{python3_version}.egg-info
 %endif
 
-%package doc
-Summary:        Documentation for python-amqp
-Group:          Documentation
-License:        LGPLv2+
-
-Requires:       %{name} = %{version}-%{release}
-
-%description doc
-Documentation for python-amqp
-
 %files doc
-%doc LICENSE demo/
+%license LICENSE
 %if 0%{?sphinx_docs}
 %doc docs/build/html docs/reference
 %endif
 
 
 %changelog
+* Wed Feb 08 2017 Matthias Runge <mrunge@redhat.com> - 2.1.4-1
+- upgrade to 2.1.4 (rhbz#1340298)
+- modernize spec, add provides (rhbz#1399248)
+
 * Mon Dec 19 2016 Miro Hrončok <mhroncok@redhat.com> - 1.4.9-4
 - Rebuild for Python 3.6
 
