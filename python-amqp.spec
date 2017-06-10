@@ -9,13 +9,14 @@
 
 Name:           python-%{srcname}
 Version:        2.1.4
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Low-level AMQP client for Python (fork of amqplib)
 
 Group:          Development/Languages
 License:        LGPLv2+
 URL:            http://pypi.python.org/pypi/amqp
 Source0:        https://files.pythonhosted.org/packages/source/a/%{srcname}/%{srcname}-%{version}.tar.gz
+Patch1:         0001-Don-t-send-AAAA-DNS-request-when-domain-resolved-to-.patch
 BuildArch:      noarch
 
 %if 0%{?sphinx_docs}
@@ -80,7 +81,7 @@ Documentation for python-amqp
 
 
 %prep
-%autosetup -n %{srcname}-%{version}
+%autosetup -n %{srcname}-%{version} -p1
 
 
 %build
@@ -136,6 +137,9 @@ popd
 
 
 %changelog
+* Sat Jun 10 2017 Ihar Hrachyshka <ihrachys@redhat.com> - 2.1.4-2
+- Don't send AAAA DNS request when domain resolved to IPv4
+
 * Wed Feb 08 2017 Matthias Runge <mrunge@redhat.com> - 2.1.4-1
 - upgrade to 2.1.4 (rhbz#1340298)
 - modernize spec, add provides (rhbz#1399248)

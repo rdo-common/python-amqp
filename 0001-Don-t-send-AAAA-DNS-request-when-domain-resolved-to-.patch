@@ -1,0 +1,84 @@
+From e11c45a6386cd9eba16be5b56298b2cbba0db167 Mon Sep 17 00:00:00 2001
+From: Ihar Hrachyshka <ihrachys@redhat.com>
+Date: Sat, 10 Jun 2017 13:07:17 -0700
+Subject: [PATCH] Don't send AAAA DNS request when domain resolved to IPv4
+ address
+
+There is no need to send both A and AAAA requests when connecting to a
+host since we are interested in a single address only. So if the host
+resolves into IPv4 address, we can skip request for AAAA since it will
+not be used anyway.
+
+This sounds like a minor optimization, but it comes as a huge win in
+case where DNS resolver is not configured for the requested host name,
+but the name is listed in /etc/hosts with a IPv4 address. In this case,
+resolution is very quick (the file is local, so no DNS request is sent),
+except for the fact that we still ask for AAAA record for the host name.
+A misconfigured DNS resolver can take time until it will time out the
+request (30 seconds is a common length for Linux), which is an
+unnecessary delay.
+
+This exact situation hit OpenStack TripleO CI where DNS was not
+configured, but resolution is implemented via /etc/hosts file which did
+not include IPv6 entries.
+
+OpenStack bug: https://bugs.launchpad.net/neutron/+bug/1696094
+---
+ amqp/transport.py | 40 +++++++++++++++++++++-------------------
+ 1 file changed, 21 insertions(+), 19 deletions(-)
+
+diff --git a/amqp/transport.py b/amqp/transport.py
+index 981c8b6..771e00e 100644
+--- a/amqp/transport.py
++++ b/amqp/transport.py
+@@ -149,26 +149,28 @@ class _AbstractTransport(object):
+                     sock.settimeout(prev)
+ 
+     def _connect(self, host, port, timeout):
+-        entries = socket.getaddrinfo(
+-            host, port, 0, socket.SOCK_STREAM, SOL_TCP,
+-        )
+-        for i, res in enumerate(entries):
+-            af, socktype, proto, canonname, sa = res
+-            try:
+-                self.sock = socket.socket(af, socktype, proto)
++        # avoid additional DNS requests for AAAA if A succeeds
++        for family in (socket.AF_INET, socket.AF_INET6):
++            entries = socket.getaddrinfo(
++                host, port, family, socket.SOCK_STREAM, SOL_TCP,
++            )
++            for i, res in enumerate(entries):
++                af, socktype, proto, canonname, sa = res
+                 try:
+-                    set_cloexec(self.sock, True)
+-                except NotImplementedError:
+-                    pass
+-                self.sock.settimeout(timeout)
+-                self.sock.connect(sa)
+-            except socket.error:
+-                self.sock.close()
+-                self.sock = None
+-                if i + 1 >= len(entries):
+-                    raise
+-            else:
+-                break
++                    self.sock = socket.socket(af, socktype, proto)
++                    try:
++                        set_cloexec(self.sock, True)
++                    except NotImplementedError:
++                        pass
++                    self.sock.settimeout(timeout)
++                    self.sock.connect(sa)
++                except socket.error:
++                    self.sock.close()
++                    self.sock = None
++                    if i + 1 >= len(entries):
++                        raise
++                else:
++                    return
+ 
+     def _init_socket(self, socket_settings, read_timeout, write_timeout):
+         try:
+-- 
+2.9.4
+
