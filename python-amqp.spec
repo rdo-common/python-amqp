@@ -9,7 +9,7 @@
 
 Name:           python-%{srcname}
 Version:        2.1.4
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Low-level AMQP client for Python (fork of amqplib)
 
 Group:          Development/Languages
@@ -137,6 +137,9 @@ popd
 
 
 %changelog
+* Thu Jul 12 2018 Alfredo Moralejo <amoralej@redhat.com> - 2.1.4-3
+- Update patch "Don't send AAAA DNS request when domain resolved to IPv4" to merged version
+
 * Sat Jun 10 2017 Ihar Hrachyshka <ihrachys@redhat.com> - 2.1.4-2
 - Don't send AAAA DNS request when domain resolved to IPv4
 
